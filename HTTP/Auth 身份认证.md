@@ -68,7 +68,7 @@ A2=<request-method>:<uri>
 
 ```
 
-### 2. 参数解释：
+### 2. 参数解释
 
 | 原英文         |       参数（请求头携带的参数名）       |                             作用                             |
 | -------------- | :------------------------------------: | :----------------------------------------------------------: |
@@ -89,3 +89,36 @@ A2=<request-method>:<uri>
 |                |                rspauth                 | 响应摘要，用于客户端对服务端进行认证 == **认证凭证（客户端校验）** == **公式：MD5(MD5(A1):::::MD5(A2))** |
 |                |                 stale                  | 当密码摘要使用的随机数过期时，服务器可以返回一个附带有新随机数的401响应，并指定stale=true，表示服务器在告知客户端用新的随机数来重试，而不再要求用户重新输入用户名和密码了 |
 |                |               algorithm                | 摘要算法，由服务端（响应头）进行指定，**默认MD5**，支持MD5、MD5-sess、SHA-256、SHA-256-sess、SHA-512-256、SHA-512-256-sess、token值 |
+
+### 3. 关于计算 response 方法
+
+在最开始的 RFC 2069 中规定 response 计算方法如下：
+
+```
+HA1 = MD5(username:realm:password)
+HA2 = MD5(method:uri)
+response = MD5(HA1:nonce:HA2)
+```
+
+随后的 RFC 2617 对计算方法进行了增强，规定计算方法如下（当algorithm值为MD5或未指定、qop未指定时等同RFC 2069）：
+
+```python
+# HA1部分
+# 当algorithm值为"MD5"或未指定时，HA1计算方法如下
+HA1 = MD5(username:realm:password)
+# 当algorithm值为"MD5-sess"时，HA1计算方法如下
+HA1 = MD5(MD5(username:realm:password):nonce:cnonce)
+
+# HA2部分
+# 当qop值为"auth"或未指定时，HA2计算方法如下
+HA2 = MD5(method:uri)
+# 当qop值为"auth-int"时，HA2计算方法如下；entityBody是指整个body（？）
+HA2 = MD5(method:uri:MD5(entityBody))
+
+# response部分
+# 当qop值为"auth"或"auth-int"时，response计算方法如下
+response = MD5(HA1:nonce:nonceCount:cnonce:qop:HA2)
+# 当qop未指定时，response计算方法如下
+response = MD5(HA1:nonce:HA2)
+```
+
