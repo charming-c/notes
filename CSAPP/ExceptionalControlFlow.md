@@ -4,7 +4,7 @@
 
 在操作系统启动时，会分配和初始化一张称为**异常表**的跳转表，每一个表目包含一个异常处理程序的地址。
 
-![image-20231012173551591](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231012173551591.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231012173551591.png" alt="image-20231012173551591" style="zoom:50%;" />
 
 异常表的起始地址放在一个叫做**异常表基址寄存器**的特殊 CPU 寄存器中。异常类似于过程调用（函数调用），但也有不同之处：
 
@@ -44,7 +44,7 @@ c语言程序用 syscall 函数可以直接调用任何系统调用。同时，�
 
 进程给每个程序提供的独占处理器的假象，如果用调试器单步执行程序，会看到一系列程序计数器的值，这个 PC 值的序列就是逻辑控制流。
 
-![image-20231013151243427](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013151243427.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013151243427.png" alt="image-20231013151243427" style="zoom:50%;" />
 
 ### 2. 私有地址空间
 
@@ -52,7 +52,7 @@ c语言程序用 syscall 函数可以直接调用任何系统调用。同时，�
 
 地址空间底部是保留给用户程序的，包括通常的代码、数据、堆和栈段。代码段总是从地址 0x400000 开始。地址空间顶部保留给内核（操作系统内存中常驻的部分），这部分包含内核在代表进程执行指令时（比如当应用程序执行系统调用时）使用的代码、数据和栈。
 
-![image-20231013152406944](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013152406944.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013152406944.png" alt="image-20231013152406944" style="zoom:50%;" />
 
 ### 3. 上下文切换
 
@@ -64,7 +64,7 @@ c语言程序用 syscall 函数可以直接调用任何系统调用。同时，�
 
 如图展示了一对进程 A 和 B 之间上下文切换的示例。进程 A 初始运行在用户模式中，直到通过执行系统调用 read 陷入到内核，内核中的陷阱处理程序请求来自磁盘控制器的 DMA 传输，并且安排在磁盘控制器完成从磁盘到内存的数据传输后，磁盘中断处理器。
 
-![image-20231013155728431](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013155728431.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013155728431.png" alt="image-20231013155728431" style="zoom:50%;" />
 
 ## 三、进程控制
 
@@ -179,13 +179,13 @@ execve 函数加载并运行可执行目标文件，且带参数列表 argv 和�
 
 1. 参数列表时如图所示的数据结构表示的。argv 变量指向一个以 null 结尾的指针数组，其中每个指针都指向一个参数字符串。按照惯例，argv[0] 是可执行目标文件的名字。环境变量的列表是由一个类似数据结构表示的，如图所示，envp变量指向一个以 null 结尾的指针数组，其中每个指针指向一个环境变量字符串，每个串都是形如“name=value”的名字-值对。
 
-    ![image-20231013214923862](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013214923862.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013214923862.png" alt="image-20231013214923862" style="zoom:50%;" />
 
 2. 在 execve 加载了 filename 之后，调用启动代码，将控制传递给新程序的主函数，该主函数有如下形式的原型：`int main(int argc, char **argv, char **envp)` 其中 argc 给出 argv[] 数组中非空指针的数量。
 
 3. 当 main 开始执行，用户栈的组织结构如图所示。从栈底往栈顶看，首先是参数和环境字符串。栈往上紧随其后是以 null 结尾的指针数组，其中每个指针都指向栈中的一个环境变量字符串。全局变量 environ 指向这些指针中的第一个 envp[0]。紧随环境变量数组之后的是以 null 结尾的 argv[] 指针数组，其中每个元素指向栈中的一个参数字符串。在栈的顶部是系统启动函数 libc_start_main的**栈帧**（函数在被调用时，所拥有的一块独立的用于存放函数所使用的状态和变量的栈空间）。
 
-    ![image-20231013220732900](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013220732900.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231013220732900.png" alt="image-20231013220732900" style="zoom:50%;" />
 
 - **getenv 函数**在环境数组中搜索字符串“name=value”。如果找到了，它就返回一个指向 value 的指针，否则它就返回 null。
 
@@ -218,7 +218,7 @@ execve 函数加载并运行可执行目标文件，且带参数列表 argv 和�
 
 一个**信号**就是一条消息，它通知进程系统中发生了一个某种类型的事件。底层的硬件异常是由内核异常处理程序处理的，正常情况下对用户是不可见的。信号提供了一种机制，通知用户进程发生了这些异常。
 
-![image-20231015173150087](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015173150087.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015173150087.png" alt="image-20231015173150087" style="zoom:50%;" />
 
 传送一个信号到目的进程是由两个不同的步骤组成的
 
@@ -231,7 +231,7 @@ execve 函数加载并运行可执行目标文件，且带参数列表 argv 和�
 
 2. **接收信号**：当目的进程被内核强迫以某种方式对信号的发送作出反应，它就接收了信号。进程可以忽略这个信号，终止或者通过执行一个称为信号处理程序的用户层函数捕获这个信号。
 
-    ![image-20231015174906923](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015174906923.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015174906923.png" alt="image-20231015174906923" style="zoom:50%;" />
 
 一个发出但是没有被接收的信号叫做**待处理信号**。
 
@@ -282,7 +282,7 @@ Unix shell 使用作业这个抽象概念来表示为对一条命令行求值而
 
 会创建一个由两个进程组成的前台作业，这两个进程是通过 Unix 管道连接的：一个进程会运行 ls 程序，另一个运行 sort 程序。shell 为每个作业创立一个独立的进程组。进程组 ID 通常取自作业中父进程中的一个。
 
-![image-20231015215746927](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015215746927.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231015215746927.png" alt="image-20231015215746927" style="zoom:50%;" />
 
 在键盘上输入 Ctrl + C 会导致内核发送一个 SIGINT 信号到**前台进程组中的每个进程**。默认情况下，结果是终止前台作业。类似的，输入 Ctrl + Z 会发送一个 SIGTSTP 信号到前台进程组中的每个进程。默认情况下，结果是停止（挂起）前台作业。
 
@@ -330,7 +330,7 @@ sighandler_t signal(int signum, sighandler_t handler);
 
 信号处理程序是可以被其他信号中断的：
 
-![image-20231016015443169](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231016015443169.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231016015443169.png" alt="image-20231016015443169" style="zoom:50%;" />
 
 ### 3. 阻塞和解除阻塞信号
 

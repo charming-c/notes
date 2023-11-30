@@ -10,7 +10,7 @@
 
 计算机系统的主存被组织成一个由 M 个连续的自己大小的单元组成的数组。每个字节都有一个唯一的物理地址（Physical Address，PA）。第一个字节的地址为 0，接下来的字节地址为 1，再下一个为 2，以此类推。给定这种简单的结构，CPU 访问内存的最自然的方式就是使用物理地址。这种方式称为 **物理寻址**。早期的 PC 使用物理寻址，现代处理器使用一种称为 **虚拟寻址**（virtual addressing）的寻址方式，如图所示：
 
-![image-20231106220237996](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231106220237996.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231106220237996.png" alt="image-20231106220237996" style="zoom:50%;" />
 
 使用虚拟寻址，CPU 会通过生成一个 虚拟地址 来访问主存，这个虚拟地址在被送到内存之前先转换成适当的物理地址。将一个虚拟地址转换为物理地址的任务叫做 **地址翻译**。就像异常处理一样，地址翻译需要 CPU 硬件和操作系统之间的紧密合作。CPU 芯片上叫做内存管理单元（Memory Management Unit， MMU）的专用硬件，利用存放在主存中的查询表来动态翻译虚拟地址，该表的内容由操作系统管理。
 
@@ -46,7 +46,7 @@ M 不要求是 2 的幂，但是为了简化讨论，假设 M = 2^m。
 
 下图展示了一个有 8 个虚拟页的小虚拟内存。虚拟页 0 和 3 还没有被分配，因此在磁盘上还不存在。虚拟页 1、4 和 6 被缓存在物理内存中。页 2、5 和 7 已经被分配了，但是当前还未缓存到主存中。
 
-![image-20231106232739579](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231106232739579.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231106232739579.png" alt="image-20231106232739579" style="zoom:50%;" />
 
 ### 1. DRAM 缓存的组织结构
 
@@ -64,23 +64,23 @@ M 不要求是 2 的幂，但是为了简化讨论，假设 M = 2^m。
 
 图中展示了一个有 8 个虚拟页和 4 个物理页的系统的页表。四个虚拟页当前被缓存在 DRAM 中。两个页还没有被分配，而剩下的已经被分配了还没有被缓存。同时，还要注意，因为 DRAM 缓存时全相联的，所以任意物理页都可以包含任意虚拟页。
 
-![image-20231107141326369](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141326369.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141326369.png" alt="image-20231107141326369" style="zoom:50%;" />
 
 ### 3. 页命中
 
 如下图所示，当 CPU 想要读取包含在 VP2 中的虚拟内存中的一个字时，如果 VP2 被缓存到 DRAM 中，使用地址翻译技术，地址翻译将虚拟地址作为一个索引来定位 PTE2，并在内存中读取它，因为设置了有效位，那么地址翻译硬件就知道 VP2 是缓存在内存中的，所以它使用 PTE 中的物理内存的地址（该地址指向 PP1 中缓存页的起始位置），构造出这个字的物理地址。
 
-![image-20231107113516933](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107113516933.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107113516933.png" alt="image-20231107113516933" style="zoom:50%;" />
 
 ### 4. 缺页
 
 在虚拟内存的习惯说法中，DRAM 缓存不命中称为**缺页（page fault）**。下图展示了在缺页之前我们的示例页表的状态。CPU 引用了 VP3 中的一个字，VP3 并未缓存在 DRAM 中。地址翻译硬件从内存中读取 PTE3，从有效位推断出 VP3 未被缓存，并且触发一个缺页异常。缺页异常出发内核的缺页异常处理程序，该程序会选择一个牺牲页，在此示例中就是存放在 PP3 中的 VP4。如果 VP4 已经被修改了，那么内核就会将它复制回磁盘。无论哪种情况，内核都会修改 VP4 的页表条目，反映出 VP4 不再缓存在主存中这一事实。
 
-![image-20231107114607922](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107114607922.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107114607922.png" alt="image-20231107114607922" style="zoom:50%;" />
 
 接下来，内核会从磁盘复制 VP3 到内存的 PP3 中，更新 PTE3，随后返回。当异常处理程序返回时，它会重新启动导致缺页的指令，该指令会把导致缺页的虚拟地址重发送到地址翻译硬件。但是现在，VP3 已经缓存到主存中了，那么页命中页命中也能由地址翻译硬件正常处理。，下图表示缺页之后的页表状态：
 
-![image-20231107120126231](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107120126231.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107120126231.png" alt="image-20231107120126231" style="zoom:50%;" />
 
 虚拟内存系统使用了和 SRAM 缓存不同的术语，即使他们的许多概念是类似的。在虚拟内存的说法中，块被称之为页。在磁盘和内存之间传送页的活动叫做交换或者页面调度。页从磁盘换入 DRAM 和从 DRAM 换出磁盘。一直等待，直到最后时刻，也就是当有不命中发生时，才换入页面的这种策略称为按需页面调度。也可以采用其他的方法，例如尝试预测不命中，在页面实际被引用之前就换入页面。然后，所有现代系统都使用的是按需页面调度方式。
 
@@ -88,7 +88,7 @@ M 不要求是 2 的幂，但是为了简化讨论，假设 M = 2^m。
 
 下图展示了操作系统分配一个新的虚拟内存页时对我们示例页表的影响，例如，调用 malloc 的结果。在这个示例中， VP5 的分配过程是在磁盘上创建空间并更新 PTE5，使它指向磁盘上新创建的页面。
 
-![image-20231107141349552](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141349552.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141349552.png" alt="image-20231107141349552" style="zoom:50%;" />
 
 ### 6. 局部性原理
 
@@ -98,7 +98,7 @@ M 不要求是 2 的幂，但是为了简化讨论，假设 M = 2^m。
 
 到目前为止，我们都假设有一个单独的页表，将一个虚拟地址空间映射到物理地址空间。实际上，操作系统为每个进程提供了一个单独的页表，因而也就是一个独立的页表，因而也就是一个独立的虚拟地址空间。下图展示了基本思想。在这个示例中，进程 i 地页表将 VP1 映射到 PP2，VP2 映射到 PP7。相似地，进程 j 的页表将 VP1 映射到 PP7， VP2 映射到 PP10。注意，多个虚拟页面可以映射到同一个共享物理页面上。
 
-![image-20231107141604674](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141604674.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107141604674.png" alt="image-20231107141604674" style="zoom:50%;" />
 
 按需页面调度和独立的虚拟地址空间的结合，对系统中内存的使用和管理造成了深远的影响。特别地，VM 简化了链接和加载、代码和数据共享，以及应用程序的内存分配。
 
@@ -120,14 +120,14 @@ M 不要求是 2 的幂，但是为了简化讨论，假设 M = 2^m。
 
 就像我们所看到的，提供独立的地址空间使得区分不同进程的私有内存变得容易。但是，地址翻译机制可以以一种自然的方式扩展到提供更好的访问控制。因为每次 CPU 在生成一个地址时，地址翻译硬件都会读一个 PTE，所以通过在 PTE 上添加一些额外的许可位来控制对一个虚拟页面内容的访问十分简单。如下图：
 
-![image-20231107163141620](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107163141620.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107163141620.png" alt="image-20231107163141620" style="zoom:50%;" />
 
 在这个示例中，每个 PTE 中已经添加了三个许可位。SUP 位表示进程是否必须运行在内核（超级用户）模式下才能访问该页。运行在内核模式中的进程可以访问任何页面，但是运行在用户模式中的进程只允许访问那些 SUP 为 0 的页面。READ 位和 WRITE 位控制对页面的读和写访问。例如，如果进程 i 运行在用户模式下，那么它有读 VP0 和写 VP1 的权限，然后，不允许它访问 VP2。如果一条指令违反了这些许可条件，那么 CPU 就会触发一个保护故障，将控制传递给一个人内核中的异常处理程序，Linux shell 一般将这种异常报告为 **段错误（segment fault）**。
 
 ## 六、地址翻译
 
 这一节讲述地址翻译的基础知识，目的是了解硬件在支持虚拟内存中的角色，并且给出足够多的细节使得可以亲手演示一些具体的示例。不过，这里省略了大量的细节，尤其是和时序相关的细节。下图包含了本节中要使用的所有符号：
-![image-20231107193029468](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107193029468.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107193029468.png" alt="image-20231107193029468" style="zoom: 50%;" />
 
 形式上来说，地址翻译是一个 N 元素的虚拟地址空间（VAS）中的元素和一个 M 元素的物理地址空间（PAS）中元素之间的映射，
 $$
@@ -135,15 +135,15 @@ $$
 $$
 这里：
 
-![image-20231107194224961](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107194224961.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107194224961.png" alt="image-20231107194224961" style="zoom:50%;" />
 
 下图展示了 MMU 如何利用页表来实现这种映射。CPU 中的一个控制寄存器，页表基址寄存器（Page Table Basic Register，PTBR）指向当前页表。n 位的虚拟地址包含两个部分：一个 p 位的虚拟页面偏移（Virtual Page Offset， VPO）和一个（n - p）位的虚拟页号（Virtual Page Number，VPN）。MMU 利用 VPN 来选择适当的 PTE。例如，VPN 0 选择 PTE 0，VPN 1 选择 PTE 1，以此类推。将页表条目的物理页号（PPN）和虚拟地址中的 VPO串联起来就得到对一个地址。注意，因为物理和虚拟页面都是 P 字节的，所以 PPO 和 VPO 也是相同的。
 
-![image-20231107213205465](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107213205465.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107213205465.png" alt="image-20231107213205465" style="zoom:50%;" />
 
 下图展示了当页面命中和不命中时，CPU 硬件的执行步骤：
 
-![image-20231107195905375](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107195905375.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107195905375.png" alt="image-20231107195905375" style="zoom:50%;" />
 
 当页面命中时：
 
@@ -165,13 +165,13 @@ $$
 
 在任何既使用虚拟内存又使用 SRAM 高速缓存的系统中，都有应该使用虚拟地址还是使用物理地址来访问 SRAM 高速缓存的问题。但是大多数系统还是选择物理寻址的。使用物理寻址，多个进程同时在高速缓存中有存储块和共享来自相同虚拟页面的块成为很简单的事情。而且，高速缓存无需处理保护问题，因为访问权限的检查是地址翻译的一部分。下图展示了一个物理寻址的高速缓存如何和虚拟内存结合起来。主要思路是地址翻译发生在高速缓存查找之前。注意，PTE 可以缓存，就像其他数据字一样。
 
-![image-20231107213005648](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107213005648.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107213005648.png" alt="image-20231107213005648" style="zoom:50%;" />
 
 ### 2. 利用 TLB 加速地址翻译
 
 正如我们所看到的，每次 CPU 产生一个虚拟地址，MMU 就必须查阅一个 PTE，以便将虚拟地址翻译为物理地址。在最糟糕的情况下，这会要求从内存多取一次数据，代价是几十到几百个时钟周期。如果 PTE 碰巧缓存在 L1 中，那么开销就下降到 1～2 个时钟周期。然而，许多系统都试图消除即使是这样的开销，他们在 MMU 包括了一个关于 PTE 的小的缓存，称为 **翻译后备缓冲寄存器（Traslation Lookside Buffer，TLB）**。
 
-![image-20231107212756729](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107212756729.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107212756729.png" alt="image-20231107212756729" style="zoom:50%;" />
 
 TLB 是一个小的、虚拟寻址的缓存，其中每一行都保存着一个由单个 PTE 组成的块。TLB 通常有高度的相联度。上图所示，用于组选择和行匹配的索引和标记字段是从虚拟地址中的虚拟页号中提取出来的。如果 TLB 有 T = 2^t 个组，那么 TLB 索引是由 VPN 的 t 个最低位组成的，而 TLB （TLBT）标记是由 VPN 中剩下的位组成的。
 
@@ -186,7 +186,7 @@ TLB 命中时的步骤：
 
 当 TLB 不命中时，MMU 必须从 L1 缓存中取出相应的 PLE，如下图所示，新取的 PLE 放在 TLB 中，可能会覆盖一个已经存在的条目。
 
-![image-20231107214338622](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107214338622.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231107214338622.png" alt="image-20231107214338622" style="zoom:50%;" />
 
 ### 3. 多级页表
 
@@ -194,7 +194,7 @@ TLB 命中时的步骤：
 
 用来压缩页表的常用方法是使用层次结构的页表。用一个具体的示例是容易理解这个思想的。假设 32 位虚拟地址空间被分为 4KB 的页，而每个页表条目都是 4 字节。还假设在这一时刻，虚拟地址有如下形式：内存的前 2k 个页面分配给了代码和数据，接下来 6k 个页面还未分配，再接下来 1023 个页面也未分配，接下来的一个页面被分配给用户栈，下图展示了如何为这个虚拟地址空间构造一个两级的页表层次结构：
 
-![image-20231109114127307](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231109114127307.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231109114127307.png" alt="image-20231109114127307" style="zoom:50%;" />
 
 一级页面中的每个 PTE 负责映射虚拟地址空间中一个 4MB 的片（chunk），这里的每一个片都是由 1024 个连续的页面组成的。比如， PTE0 映射第一片，PTE1 映射接下来的一片，以此类推。假设地址空间是 4GB，1024 个 PTE 已经足够覆盖整个空间了。如果片 i 中的每个页面都未被分配，那么一级 PTE i 就为空。例如上图，片 2～7 是未被分配的。然而，如果片 i 中至少有一个页是分配了的，那么一级 PTE i 就指向一个二级页表的基址。例如，在图中，片 0，1，8的所有或者部分已被分配，所以他们的一级 PTE 指向二级页表。
 
@@ -202,7 +202,7 @@ TLB 命中时的步骤：
 
 下图描述了使用 k 级页表层次结构的地址翻译。虚拟地址被划分为称为 k 个 VPN 和一个 VPO。每个 VPN i 都是一个到第 i 级页表的索引，其中 1 <= i <= k。第 j 级页表中的每个 PTE，1 <= j <= k-1，都指向第 j+1 级某个页表的基址。第 k 级页表中的每个 PTE 包含某个物理界面的 PPN ，或者某个磁盘块的地址，为了构造物理地址，在能够确定 PPN 之前，MMU 必须访问 k 个 PTE。对于只有一级的页表结构，PPO 和 VPO 是相同的。
 
-![image-20231109163207686](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231109163207686.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231109163207686.png" alt="image-20231109163207686" style="zoom:50%;" />
 
 ### 4. 端到端的地址翻译
 

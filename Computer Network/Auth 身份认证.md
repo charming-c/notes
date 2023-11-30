@@ -14,7 +14,7 @@ BASIC 认证(基本认证)是从 HTTP/1.0 就定义的认证方式。即便是 �
 
 ### 1. BASIC 认证的认证步骤
 
-![image-20231019171151907](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231019171151907.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231019171151907.png" alt="image-20231019171151907" style="zoom:50%;" />
 
 - 步骤 1: 当请求的资源需要 BASIC 认证时，服务器会随状态码 401 Authorization Required，返回带 WWW-Authenticate 首部字段的响应。 该字段内包含认证的方式(BASIC) 及 Request-URI 安全域字符串 (realm)。
 
@@ -28,13 +28,13 @@ BASIC 认证(基本认证)是从 HTTP/1.0 就定义的认证方式。即便是 �
 
 从 HTTP/1.1 起开始有 DIGEST 认证，DIGEST 使用质询/响应（challenge-response）方式。challenge-response 方式是指：一开始一方会发送认证方式给另一方，接着使用从另一方获得的质询码（challenge）计算生成响应码，最后响应码返回给对方的进行认证的方式。DIGEST 认证提供高于 BASIC 认证的安全等级，但是和 HTTPS 客户端相比还是比较弱。
 
-![image-20231019154739170](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231019154739170.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231019154739170.png" alt="image-20231019154739170" style="zoom:50%;" />
 
 因为发送给对方的只是响应摘要及由质询码产生的就算结果，所以比起 BASIC 认证，密码泄漏的可能性降低。
 
 ### 1. DIGEST 认证的认证步骤
 
-![image-AQ9jpQLoU-transformed](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-AQ9jpQLoU-transformed.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-AQ9jpQLoU-transformed.png" alt="image-AQ9jpQLoU-transformed" style="zoom:50%;" />
 
 - 步骤1：请求需要认证的资源时，服务器会随着状态码 401 Authorization Required，返回带 WWW-Authenticate 首部字段的响应。该字段内包含质询响应方式所需的临时质询码（随机数：nonce）。
     - 首部字段 WWW-Authenticate 内必须包含 realm 和 nonce 这两个字段的信息。客户端就是依靠向服务器回送这两个值进行认证的。
