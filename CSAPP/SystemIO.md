@@ -54,7 +54,7 @@ flags 参数也可以是一个或者跟多位掩码的或，为写提供一些�
 
 **mode 参数指定了新文件的访问权限位**。这些位的符号名字如下图所示：
 
-![image-20231031235815334](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231031235815334.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231031235815334.png" alt="image-20231031235815334" style="zoom:50%;" />
 
 作为上下文的一部分，每个进程都有一个 umask，它是通过调用 umask 函数来设置的，当进程通过带某个 mode 的参数的 open 函数调用来创建一个新文件时，文件的访问权限位被设置成为 **mode & ~umask**。例如：
 
@@ -316,7 +316,7 @@ int fstat(int fd, struct stat *buf);
 
 stat 函数以一个文件名为输入，填写如下图所示的一个 stat 数据结构中的各种成员。fstat 函数是相似的，只不过以文件描述而不是文件名作为输入，在讨论 Web 服务器时，会需要 stat 数据结构中的 st_mode 和 st_size 成员。
 
-![image-20231103104203612](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103104203612.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103104203612.png" alt="image-20231103104203612" style="zoom:50%;" />
 
 st_size 成员包含了文件的字节数大小。st_mode 成员则编码了文件访问许可位和文件类型。Linux 在 sys/stat.h 中定义了宏谓词来确定 st_mode 成员的文件类型：
 
@@ -365,15 +365,15 @@ int closedir(DIR *dirp);
 
 如图，其中描述符 1 和 4 通过不同的打开文件表表项来引用两个不同的文件。这是一种典型的情况，没有共享文件，并且每个描述符对应一个不同的文件。
 
-![image-20231103114314555](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114314555.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114314555.png" alt="image-20231103114314555" style="zoom:50%;" />
 
 多个描述符也可以通过不同的文件表项来引用同一个文件。例如，如果以同一个 filename 调用 open 函数两次，就会发生这种情况，关键思想是每个描述符都有它自己的文件位置，所以对于不同描述符的读操作可以从文件的不同位置获取数据。
 
-![image-20231103114552262](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114552262.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114552262.png" alt="image-20231103114552262" style="zoom:50%;" />
 
 我们也可以理解父子进程是如何共享文件的。假设在调用 fork 以前，父进程有 图10-12 的打开文件。然后调用了 fork 之后，如下图所示，子进程有父进程描述符表的副本。父子进程共享相同的打开文件表的集合，因此共享相同的文件位置。一个很重要的结果是，在内核删除对应文件表表项之前，父子进程必须都关闭了它们的描述符。
 
-![image-20231103114926664](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114926664.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103114926664.png" alt="image-20231103114926664" style="zoom:50%;" />
 
 ## 九、I/O 重定向
 
@@ -390,11 +390,11 @@ int dup2(int oldfd, int newfd);
 
 dup2 函数复制描述符表表项 oldfd 到描述符表项 newfd，覆盖描述符表项newfd 以前的内容。如果 newfd 已经打开， dup2会在复制 oldfd 之前关闭 newfd。例如，对于 图10-12 的描述符指向，调用 dup2(4,1) 以后，其结果如图所示：
 
-![image-20231103123315550](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103123315550.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103123315550.png" alt="image-20231103123315550" style="zoom:50%;" />
 
 ## 十、标准 I/O
 
-![image-20231103124701928](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103124701928.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231103124701928.png" alt="image-20231103124701928" style="zoom:50%;" />
 
 标准 I/O 在某种意义上是双全工的，因为程序可以在一个流上进行执行输入和输出。然而，对流的限制和对套接字的限制，有时会互相冲突：
 

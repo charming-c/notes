@@ -32,7 +32,7 @@ HTTP 主要有如下不足，例举如下：
 
         在这种情况下，客户端需要对 HTTP 报文进行加密处理后再发送请求。
 
-        ![image-20231114162615505](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114162615505.png)
+        <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114162615505.png" alt="image-20231114162615505" style="zoom:50%;" />
 
 ### 2. 不验证通信方的身份就可能遭遇伪装
 
@@ -51,13 +51,13 @@ HTTP 协议中的请求和响应不会对通信方进行确认。也就是说存
 
     虽然使用 HTTP 无法确定通信对方，但如果使用 SSL 则可以。SSL 不仅提供加密处理，而且还使用的了一种被称之为证书的手段，可用于确定方。
 
-    ![image-20231114163751798](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114163751798.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114163751798.png" alt="image-20231114163751798" style="zoom:50%;" />
 
 ### 3. 无法证明报文完整性，可能已遭篡改
 
 - 接收到的内容可能有误
 
-    ![image-20231114163958963](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114163958963.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114163958963.png" alt="image-20231114163958963" style="zoom:50%;" />
 
     请求或响应在传输中，遭受攻击者拦截并篡改内容的攻击称为中间人攻击（Man-in-the-Middle attack，MITM）。
 
@@ -73,7 +73,7 @@ HTTP 协议中的请求和响应不会对通信方进行确认。也就是说存
 
 HTTPS 不是新的应用层协议，只是 HTTP 通信接口部分用 SSL 和 TLS 协议代替而已。通常 HTTP 直接和 TCP 通信，当使用 SSL 时，则演变成先和 SSL 通信，再由 SSL 和 TCP 通信。
 
-![image-20231114165113215](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114165113215.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114165113215.png" alt="image-20231114165113215" style="zoom:50%;" />
 
 SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在应用层的 SMTP 和 Telnet等协议均可配合 SSL 协议使用。可以说 SSL 是世界上应用最为广泛的网络安全技术。
 
@@ -81,7 +81,7 @@ SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在�
 
 - HTTPS 采用混合加密机制
 
-    ![image-20231114170139770](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114170139770.png)
+    <img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114170139770.png" alt="image-20231114170139770" style="zoom:50%;" />
 
 ### 3. 证明公开密钥正确性的证书
 
@@ -91,7 +91,7 @@ SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在�
 
 此处认证机关的公开密钥必须安全的转交给客户端，使用通信方式时，如何安全转交是一件很困难的事情，因此，多数浏览器开发商发布版本时，会事先在内部植入常用认证机关的公开密钥。
 
-![image-20231114171703528](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114171703528.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114171703528.png" alt="image-20231114171703528" style="zoom:50%;" />
 
 - 可证明组织真实性的 EV SSL 证书
 
@@ -105,7 +105,7 @@ SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在�
 
 以下是 HTTPS 的通信机制：
 
-![image-20231114172435797](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114172435797.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114172435797.png" alt="image-20231114172435797" style="zoom: 50%;" />
 
 - 1. 客户端通过发送 Client Hello 报文开始 SSL 通信。报文中包含客户端支持的 SSL 的指定的版本、加密组件列表（所使用的加密算法以及密钥长度等）
 - 2. 服务器可进行 SSL 通信时，会以 Server Hello 报文作为应答。和客户端一样，报文中包含 SSL 版本以及加密组件，服务器的加密组件内容是从客户端加密组件中筛选出来的。
@@ -122,7 +122,7 @@ SSL 是独立于 HTTP 的协议，所以不光是 HTTP 协议，其他运行在�
 
 在以上步骤中，应用层发送数据时会附加一种叫做 MAC （Message Authentication Code）的报文摘要。MAC 能够查知报文是否遭到更改，从而保护报文完整性。
 
-![image-20231114175838819](https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114175838819.png)
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/image-20231114175838819.png" alt="image-20231114175838819" style="zoom:50%;" />
 
 
 
