@@ -208,10 +208,10 @@ ssize_t rio_readnb(rio_t *rp, void *usrbuf, size_t n);
 
 ```c
 #define RIO_BUFSIZE 8192
-typedef struct {
+typedef struct rio_t {
 	int rio_fd;	// 此缓冲区的描述符
 	int rio_cnt;	// 缓冲区缓存的数据大小
-	char *rio_bufptr;	// 缓冲区下一个可寸字节的地址
+	char *rio_bufptr;	// 缓冲区下一个内存字节的地址
 	char rio_buf[RIO_BUFSIZE];	// 整个缓冲区
 }
 
