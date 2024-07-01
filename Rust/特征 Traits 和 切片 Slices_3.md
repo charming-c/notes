@@ -1,4 +1,4 @@
-# Traits 和 Slices
+# 	Traits 和 Slices
 
 Trait 特征就是 Rust 中的接口， Slice 切片在 go 中也见过了。
 
@@ -275,7 +275,7 @@ impl ::core::cmp::PartialEq for Ticket {
 
  ## 五、特征界限和泛型编程
 
-### 1. 泛型编程：
+### 1. 泛型编程
 
 泛型支持我们在写代码时支持以类型作为参数，而不是使用特定的类型的参数。
 
@@ -400,3 +400,163 @@ slice 会保存两个信息在栈中：
 
 - 如果一个方法返回 &string，那么说明堆中有一块内存 UTF8 编码的数据完全匹配所返回的引用。
 - 如果一个方法返回 &str，那么说明只是在堆内存中有一个块内存的部分正好和返回的引用匹配，更为灵活。
+
+## 七、解引用特征 Deref trait
+
+尝试阅读下面这行代码：
+
+```rust
+impl Ticket {
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+}
+```
+
+title 的类型为 String，这里应该是返回值为 &String，为什么返回 &str 没有编译错误？就是因为 Deref trait。在 Rust 的标准库中，deref 在 std::ops 模块：
+
+```rust
+// I've slightly simplified the definition for now.
+// We'll see the full definition later on.
+pub trait Deref {
+    type Target;
+    
+    fn deref(&self) -> &Self::Target;
+}
+```
+
+而 target 就是一个关联的类型。它是一种具体类型的占位符，在实现特征时必须指定。
+
+### 1. 强制解引用
+
+通过对一个类型 T 实现 `Deref<Target = U>`特征，这就会告诉编译器 &T 和 &U 在某种程度上是可以互换的。特别的，你可以得到下面两种行为：
+
+- 对 T 的引用隐式地被转化为对 U 的引用（例如：&T 变成 &U）
+- 你可以通过 &T 调用 U 中所有定义的方法，以 &self 作为输入。
+
+通过 Deref 还可以做 *（解引用运算的重载）。
+
+### 2. String 实现了 Deref
+
+之所以可以编译通过就是这个原因：
+
+```rust
+impl Deref for String {
+    type Target = str;
+    
+    fn deref(&self) -> &str {
+        // [...]
+    }
+}
+```
+
+## 八、Sized
+
+在我们之前讨论 &str 的内存是我们知道，&str 不仅仅只保存了指针，同时还保存了其他的数据
+
+### 1. 动态大小的类型
+
+str 是一个动态大小的类型（DST）。DST 就是在编译时不知道大小的类型。无论什么时候，我们持有一个DST 的引用，比如 &str。它必须还包含一些除了它指向的地址的额外的数据。他就是一个胖指针（fat pointer）。像 &str，就是保存了它指向的切片的长度。
+
+### 2. sized trait
+
+Rust 标准库中定义了一个 trait 叫做 Sized。
+
+```rust
+pub trait Sized {
+    // This is an empty trait, no methods to implement.
+}
+```
+
+如果一个类型是 Sized，那么它的大小在编译的时候就知道了，不是一个 DST。
+
+### 3. marker trait 标记特征
+
+Sized 就是一个标记特诊。标记特征就是一个没有任何方法需要实现的特征。它里面没有定义任何方法，他只是为了 type 的某些特性做了一个标记。标记只会被编译器发挥出作用，使得其发挥某个功能或者优化。
+
+### 4. auto trait 自动特征
+
+特别的，Sized 也是一个自动特征。我们不需要显式地实现它，编译器会自动根据类型定义实现。
+
+## 九、泛型和关联类型
+
+让我们重新审视一下 From 和 Deref 两个 trait：
+
+```rust
+pub trait From<T> {
+    fn from(value: T) -> Self;
+}
+
+pub trait Deref {
+    type Target;
+    
+    fn deref(&self) -> &Self::Target;
+}
+```
+
+他们都将类型视作参数：
+
+- 在 From 中，是泛型参数 T
+- 在 Deref 中，是关联类型 Target
+
+这两者的区别是什么？
+
+- Deref 只能实现一次，也就是说 String 只能被解引用成 str，而不能是别的类型，不然编译器就会混乱。所以一个关联的类型，在实现之后，这个方法就是固定的，这个类型也就确定下来了。
+
+- From 可以实现多次，每一次实现都会传递一个不同的类型参数，因为在调用 From 时我们也会知道参数的类型，自然编译器也会知道去调用哪一个方法。所以 From 中不同的 from 实现，可以视为一种多态，他们的函数签名是不一样的。
+
+    ```rust
+    impl From<u32> for WrappingU32 {
+        fn from(value: u32) -> Self {
+            WrappingU32 { inner: value }
+        }
+    }
+    
+    impl From<u16> for WrappingU32 {
+        fn from(value: u16) -> Self {
+            WrappingU32 { inner: value.into() }
+        }
+    }
+    ```
+
+### 1. Add 运算符重载
+
+标准库中定义：
+
+```rust
+pub trait Add<RHS = Self> {
+    type Output;
+    
+    fn add(self, rhs: RHS) -> Self::Output;
+}
+```
+
+- RHS 作为泛型参数，默认是 Self（实现者本身的类型）
+- Output 作为关联类型，返回 + 的结果
+
+为了实现不同类型的相加：
+
+```rust
+impl Add<u32> for u32 {
+    type Output = u32;
+    
+    fn add(self, rhs: u32) -> u32 {
+      //                      ^^^
+      // This could be written as `Self::Output` instead.
+      // The compiler doesn't care, as long as the type you
+      // specify here matches the type you assigned to `Output` 
+      // right above.
+      // [...]
+    }
+}
+
+impl Add<&u32> for u32 {
+    type Output = u32;
+    
+    fn add(self, rhs: &u32) -> u32 {
+        // [...]
+    }
+}
+```
+
+如果把 output 也设置成泛型，那好了对于 u32 + u32 那么 Output 就有两种情况了，根本就不知道调用哪个方法。
