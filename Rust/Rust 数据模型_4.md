@@ -153,3 +153,77 @@ impl Ticket {
 ```
 
 ## 二、元组 
+
+元祖是 Rust 的基本数据类型之一，是一组（通常是不同类型的）值的集合。
+
+```rust
+// Two values, same type
+let first: (i32, i32) = (3, 4);
+// Three values, different types
+let second: (i32, u32, u8) = (-42, 3, 8);
+
+assert_eq!(second.0, -42);
+assert_eq!(second.1, 3);
+assert_eq!(second.2, 8);
+```
+
+## 三、Option 类型
+
+Option 是一个 Rust 类型，可以代表空值。它是一个 枚举类，定义在 Rust 标准库之中：
+
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+// 其中 Some 是一个像 元组 一样的 variant
+// Some 持有了一个没有命名的属性
+```
+
+Option 实现了一个 value 可能存在（Some(T)）或者不存在（None）想法。它迫使我们必须要显式地处理这两种情况。如果忘记处理 None，就会抛出一个编译错误。
+
+## 四、Result 类型
+
+和 Option 类似：
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+它有两个变体：
+
+- OK(T)：代表一个成功的操作，它持有一个 T。是操作的输出
+- Err(E)：代表一个失败的操作，它持有一个 E，是出现的错误
+
+Rust 通过 Result，迫使你必须编程失败的可能，在方法的签名中。如果一个函数会导致错误，并且你希望调用者可以得到该错误，那么函数就应该返回一个 Result：
+
+```rust
+// Just by looking at the signature, you know that this function can fail.
+// You can also inspect `ParseIntError` to see what kind of failures to expect.
+fn parse_int(s: &str) -> Result<i32, ParseIntError> {
+    // ...
+}
+```
+
+**Rust 中 Result 类型的处理**：
+
+- 当出错时 panic：
+
+    ```rust
+    // Panics if `parse_int` returns an `Err`.
+    let number = parse_int("42").unwrap();
+    // `expect` lets you specify a custom panic message.
+    let number = parse_int("42").expect("Failed to parse integer");
+    ```
+
+- 其他自定义处理方式：
+
+    ```rust
+    match parse_int("42") {
+        Ok(number) => println!("Parsed number: {}", number),
+        Err(err) => eprintln!("Error: {}", err),
+    }
+    ```
