@@ -45,6 +45,8 @@
 
 #### 设置断点
 
+可以在下面表达式之后添加 if 判断
+
 - `(gdb) break <函数名>`：对当前正在执行的文件中的指定函数设置断点。可简写为：(gdb) b <函数名>
 - `(gdb) break <行号>`：对当前正在执行的文件中的特定行设置断点。可简写为：(gdb) b <行号>
 - `(gdb) break <文件名：行号>`：对指定文件的指定行设置断点。最常用的设置断点方式。可简写为：(gdb) b <文件名：行号>
@@ -89,3 +91,5 @@
 - `(gdb) info frame <栈帧编号>`：可以查看指定栈帧的详细信息
 - `(gdb) up`：进入上层栈帧
 - `(gdb) down`：进入下层栈帧
+
+![git-cheat-sheet](https://raw.githubusercontent.com/charming-c/image-host/master/img/git-cheat-sheet.webp)
