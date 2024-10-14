@@ -1,7 +1,6 @@
 # Linux IO_Uring 
 
 [toc]
-
 ## 一、网络 IO
 
 下图是一个 UDP 连接中 socket 的 IO 流程：
@@ -33,7 +32,7 @@
 
 上文中，清晰地展示了阻塞 IO 模型。当进程调用 recvfrom 时，由于此时 socket 中数据为空，进程阻塞。只有当内核将数据准备好，并且拷贝到用户空间后，进程才能继续执行，recvfrom 系统调用返回。
 
-<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/640" alt="图片" style="zoom:50%;" />
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/640" alt="图片" style="zoom:67%;" />
 
 在阻塞 IO 中，在调用 recvfrom 时，会发生阻塞，导致进程切换，数据需要经历从网卡到内核，从内核到用户空间的两次转换。一次进程切换或者或者是数据拷贝均会导致许多不必要的 CPU 开销。
 
@@ -41,7 +40,7 @@
 
 非阻塞 IO 即不发生阻塞的网络 IO。Linux 中为 socket 实现了 non_blocking 选项，这样在调用 recvfrom 时，socket 接收队列没有准备好数据时，进程不会阻塞，没有上下文切换，而是直接返回。因此，在使用是，需要轮询数据是否就绪，如下图：
 
-<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/640-20241013183939246" alt="图片" style="zoom:50%;" />
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/640-20241013183939246" alt="图片" style="zoom:67%;" />
 
 虽然不会发生阻塞，但当数据已经到达内核空间的 socket 的接收队列后，用户进程依然要等待 recvfrom() 函数将数据从内核空间拷贝到用户空间，才会从 recvfrom() 系统调用函数中返回。
 
@@ -52,7 +51,7 @@
 
 ### 3. IO 多路复用
 
-为了解决非阻塞 IO 频繁系统调用的问题，引出 IO 多路复用机制，一次性管理多个连接的 IO。我们不用频繁的系统调用，而可以非阻塞的处理多个连接。不过，在没有连接就绪时，我们仍然需要轮询或者阻塞进程进行等待，并且数据还是需要进行两轮拷贝。由于 IO 多路复用不是本文的重点，这里忽略详细介绍，具体请看 [这里](https://mp.weixin.qq.com/s/5xj42JPKG8o5T7hjXIKywg)。
+为了解决非阻塞 IO 频繁系统调用的问题，引出 IO 多路复用机制，一次性管理多个连接的 IO。我们不用频繁的系统调用，而可以非阻塞的处理多个连接。不过，在没有连接就绪时，我们仍然需要阻塞进程进行等待，并且数据还是需要进行两轮拷贝。由于 IO 多路复用不是本文的重点，这里忽略详细介绍，具体请看 [这里](https://mp.weixin.qq.com/s/5xj42JPKG8o5T7hjXIKywg)。
 
 ### 4. 异步 IO（AIO）
 
@@ -77,7 +76,7 @@
 
 如果要解决从内核到用户的数据拷贝，最自然的思路就是在内核和用户空间共享一块内存，同时采用一种同步的机制去使用它。然而，不经过系统调用，内核和用户空间是无法共同使用锁机制的，而系统调用又会影响性能。因此 IO_Uring 采用 **单生产者单消费者** 的环形缓冲区，通过**内存排序**和**内存屏障**而不是共享锁来实现 IO 操作。因为对于一个异步接口有两个最基本的操作：提交请求的行为、请求完成的事件。对于 提交 IO 的操作：应用是生产者、内核是消费者，对于 IO 完成的事件：应用是消费者、内核是生产者。因此需要一对 channel 以供应用和内核进行通信：submission queue（SQ）、（Completion Queue）（CQ）。其大致的架构如下：
 
-<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/01.jpg" alt="io_uring" style="zoom:50%;" />
+<img src="https://raw.githubusercontent.com/charming-c/image-host/master/img/01.jpg" alt="io_uring" style="zoom: 50%;" />
 
 ### 1. SQ && CQ
 
@@ -462,9 +461,15 @@ struct io_uring {
 ## 四、参考文档
 
 - [Efficient IO with io_uring](https://kernel.dk/io_uring.pdf)
+
 - [How io_uring and eBPF Will Revolutionize Programming in Linux](https://thenewstack.io/how-io_uring-and-ebpf-will-revolutionize-programming-in-linux/)
+
 - [An Introduction to the io_uring Asynchronous I/O Framework](https://medium.com/oracledevs/an-introduction-to-the-io-uring-asynchronous-i-o-framework-fad002d7dfc1)
+
 - [深入学习IO多路复用 select/poll/epoll 实现原理](https://mp.weixin.qq.com/s/5xj42JPKG8o5T7hjXIKywg)
+
 - [网络 IO 演变发展过程和模型介绍](https://mp.weixin.qq.com/s/EDzFOo3gcivOe_RgipkTkQ)
+
 - [操作系统与存储：解析Linux内核全新异步IO引擎io_uring设计与实现](https://mp.weixin.qq.com/s/QshDG-nbmBcF1OBZbBFwjg)
+
 - [liburing](https://github.com/axboe/liburing)
