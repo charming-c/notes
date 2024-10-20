@@ -355,7 +355,7 @@ int io_uring_register(unsigned int fd, unsigned int opcode, void *arg, unsigned 
 
 **POLLED IO**
 
-如果应用追求非常低的延时性能，IO_Uring 提供了对文件的 poll IO 机制。在这里，poll 指不再依靠硬件中断信号传递事件完成，而是采用应用不断地向驱动请求提交的 IO 状态来判断事件是否完成。实现方式是在 `io_uring_setup`中设置` IORING_SETUP_IOPOLL `flags。当使用了 poll IO，应用就不能通过检查 CQ 来判断 IO 是否完成，而是需要使用io_uring_enter 系统调用，并且传入 flags 设置 `IORING_ENTER_GETEVENTS`。
+如果应用追求非常低的延时性能，IO_Uring 提供了对文件的 poll IO 机制。在这里，poll 指不再依靠硬件中断信号传递事件完成，而是采用应用不断地向驱动请求提交的 IO 状态来判断事件是否完成。实现方式是在 `io_uring_setup`中设置` IORING_SETUP_IOPOLL `flags。当使用了 poll IO，应用就不能通过直接检查 CQ 来判断 IO 是否完成，这是因为不会有硬件侧的完成事件自动触发提交到 CQ，而是需要先使用io_uring_enter 系统调用，并且传入 flags 设置 `IORING_ENTER_GETEVENTS`，然后再检查 CQ。
 
 **KERNEL SIDE POLLING**
 
