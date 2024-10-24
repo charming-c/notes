@@ -382,6 +382,123 @@ if ((*sqring→flags) & IORING_SQ_NEED_WAKEUP)
 
 同时内核进程休眠的时间默认是一秒，但是可以再 params 中设置，参数为 sq_thread_idle。对于内核侧轮询模式，要得到完成 IO 的事件，直接检查 CQ 的 head。
 
+### 5. Memory ordering
+
+在一个 io_uring 的实例中进行安全和有效通信的一个重要方面就是：正确的使用内存排序原语(memory ordering primitives)。如果直接使用 io_uring 的原始接口，这一点是非常重要的。为了简洁，io_uring 的文档将其中用到的简化为两种原语：
+
+- `read_barrier()`：在进行读的子操作时，确保先前的写是可见的（已完成）
+- `writer_barrier()`：将当前的写排在先前的写之后
+
+依据具体的架构，这两个中的一个或两个可能是无操作（no-ops）。但是这不重要，重要的是在一些情况下我们是需要他们的，并且应用需要知道接下来应该怎么做。一个`writer_barrier()`需要确保写的有序性。我们说一个应用想要填充一个 sqe 并且通知内核这个 sqe 已经准备好被消费了，这其实可以分成两个阶段：第一个阶段是一些 sqe 已经被填充，并且将索引存放到 array 中，然后第二个阶段 SQ 的 tail 被更新，告诉内核一个新的 entry 是可用的。当没有任何内存排序的限制，为了更好地优化，处理器就会十分积极的重新排序这些操作，让我们从一个例子开始看：
+
+```c
+1: sqe→opcode = IORING_OP_READV;
+2: sqe→fd = fd;
+3: sqe→off = 0;
+4: sqe→addr = &iovec;
+5: sqe→len = 1;
+6: sqe→user_data = some_value;
+7: sqring→tail = sqring→tail + 1;
+```
+
+对于操作 7，也就是让 sqe 对内核可见，没有任何把内存顺序的保证，这使得他可能会在上一次写操作中间发生，这样的话内核可能就会看到一个上一个写了一半的 sqe。所以无论如何填充 sqe，必须要在一次更新 tail，通知内核之前，让之前的写可见，所以看下面的代码：
+
+```c
+1: sqe→opcode = IORING_OP_READV;
+2: sqe→fd = fd;
+3: sqe→off = 0;
+4: sqe→addr = &iovec;
+5: sqe→len = 1;
+6: sqe→user_data = some_value;
+ write_barrier(); /* ensure previous writes are seen before tail write */
+7: sqring→tail = sqring→tail + 1;
+ write_barrier(); /* ensure tail write is seen */
+```
+
+同时内核也会在读 SQ 的 tail 之前添加一个`read_barrier()`，确保之前的写操作都是可见的。对于 CQ ring 也是一样的逻辑，只不过内核和应用反过来了。
+
+虽然内存排序已经被概括为两种特定的类型，但是其实取决于代码运行的机器不同，这种架构的实现当然也是不一样的，可以看一个来自 manpage 的例子：
+
+```c
+/* Macros for barriers needed by io_uring */
+    #define io_uring_smp_store_release(p, v)            \
+               atomic_store_explicit((_Atomic typeof(*(p)) *)(p), (v), \
+                             memory_order_release)
+    #define io_uring_smp_load_acquire(p)                \
+               atomic_load_explicit((_Atomic typeof(*(p)) *)(p),   \
+                            memory_order_acquire)
+
+ int read_from_cq() {
+     struct io_uring_cqe *cqe;
+     unsigned head;
+
+     /* Read barrier */
+     head = io_uring_smp_load_acquire(cring_head);
+     /*
+           * Remember, this is a ring buffer. If head == tail, it means that the
+           * buffer is empty.
+           * */
+     if (head == *cring_tail)
+         return -1;
+
+     /* Get the entry */
+     cqe = &cqes[head & (*cring_mask)];
+     if (cqe->res < 0)
+         fprintf(stderr, "Error: %s\n", strerror(abs(cqe->res)));
+
+     head++;
+
+     /* Write barrier so that update to the head are made visible */
+     io_uring_smp_store_release(cring_head, head);
+
+     return cqe->res;
+ }
+
+int submit_to_sq(int fd, int op) {
+    unsigned index, tail;
+
+    /* Add our submission queue entry to the tail of the SQE ring buffer */
+    tail = *sring_tail;
+    index = tail & *sring_mask;
+    struct io_uring_sqe *sqe = &sqes[index];
+    /* Fill in the parameters required for the read or write operation */
+    sqe->opcode = op;
+    sqe->fd = fd;
+    sqe->addr = (unsigned long) buff;
+    if (op == IORING_OP_READ) {
+        memset(buff, 0, sizeof(buff));
+        sqe->len = BLOCK_SZ;
+    }
+    else {
+        sqe->len = strlen(buff);
+    }
+    sqe->off = offset;
+
+    sring_array[index] = index;
+    tail++;
+
+    /* Update the tail */
+    io_uring_smp_store_release(sring_tail, tail);
+
+    /*
+           * Tell the kernel we have submitted events with the io_uring_enter()
+           * system call. We also pass in the IOURING_ENTER_GETEVENTS flag which
+           * causes the io_uring_enter() call to wait until min_complete
+           * (the 3rd param) events complete.
+           * */
+    int ret =  io_uring_enter(ring_fd, 1,1,
+                              IORING_ENTER_GETEVENTS);
+    if(ret < 0) {
+        perror("io_uring_enter");
+        return -1;
+    }
+
+    return ret;
+}
+```
+
+
+
 ## 三、liburing 学习
 
 liburing 是官方支持 io_uring 库，这里简单学习一下它为 io_uring 做的封装。
